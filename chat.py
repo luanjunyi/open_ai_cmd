@@ -80,7 +80,7 @@ if __name__ == '__main__':
             prompt = multiline_input()
 
         try:
-            resp = chat_response(prompt, role, history)
+            resp = chat_response(prompt, role, history, model)
             if resp is None:
                 raise Exception("Response is empty...")
         except Exception as err:
