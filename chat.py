@@ -3,6 +3,8 @@ import openai
 import readline
 import sys
 import signal
+import sqlite3
+import datetime
 
 
 conf = configparser.ConfigParser()
@@ -36,10 +38,13 @@ def chat_response(prompt, role='user', history=[], model="gpt-4"):
 
             message = resp.choices[0].message['content'].strip()
             history.append({"role": "assistant", "content": message})
-            return message
+            usage = resp.usage
+            return message, usage.prompt_tokens, usage.completion_tokens
         except Exception as err:
             print("Failed to call OpenAI API. I will retry. The error is [%s]." % err )
             retry -= 1
+
+    return None, None, None
 
 
 def multiline_input():
@@ -50,9 +55,26 @@ def multiline_input():
     print("\n==========[Multiline input finished]==========\n")
     return '\n'.join(ret)
 
+def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token):
+    cursor = db_conn.cursor()
+    insert_query = (" INSERT INTO chat (datetime,"
+                    "question,"
+                    "answer, "
+                    "num_prompt_token, "
+                    "num_completion_token)"
+                    "VALUES (?, ?, ?, ?, ?)")
+    data = (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            prompt,
+            response,
+            num_prompt_tocken,
+            num_completion_token)
+    cursor.execute(insert_query, data)
+    db_conn.commit()    
+
 if __name__ == '__main__':
     history = []
     model = "gpt-4"
+    db = sqlite3.connect('chat-log.db')
     while True:
         prompt = input("> ")
         role = 'user'
@@ -72,6 +94,15 @@ if __name__ == '__main__':
                 print("Unknown model (%s), possible models are: %s" % (m, model_dict.keys()))
             continue
 
+        if prompt == "/g3":
+            model = model_dict["gpt3"]
+            continue
+
+        if prompt == "/g4":
+            model = model_dict["gpt4"]
+            continue
+        
+
         if prompt.startswith('/sys '):
             prompt = prompt[len("/sys "):]
             role = 'system'
@@ -80,12 +111,16 @@ if __name__ == '__main__':
             prompt = multiline_input()
 
         try:
-            resp = chat_response(prompt, role, history, model)
+            resp, num_prompt_tocken, num_completion_token = chat_response(prompt, role, history, model)
             if resp is None:
                 raise Exception("Response is empty...")
         except Exception as err:
             print(err)
             continue
 
+        log_chat(db, prompt, resp, num_prompt_tocken, num_completion_token)
         print('\n' + resp + '\n')
+
+    db.commit()
+    db.close()
 

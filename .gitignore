@@ -1,5 +1,6 @@
 # Custom
 config.ini
+*.db
 *.wav
 
 # Byte-compiled / optimized / DLL files
