@@ -5,7 +5,8 @@ import sys
 import signal
 import sqlite3
 import datetime
-
+from rich import print
+from rich.markdown import Markdown
 
 conf = configparser.ConfigParser()
 conf.read("config.ini")
@@ -71,6 +72,10 @@ def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token)
     cursor.execute(insert_query, data)
     db_conn.commit()    
 
+def print_markdown(text):
+    md = Markdown(text)
+    print(md)
+    
 if __name__ == '__main__':
     history = []
     model = "gpt-4"
@@ -119,7 +124,7 @@ if __name__ == '__main__':
             continue
 
         log_chat(db, prompt, resp, num_prompt_tocken, num_completion_token)
-        print('\n' + resp + '\n')
+        print_markdown('\n' + resp + '\n')
 
     db.commit()
     db.close()
