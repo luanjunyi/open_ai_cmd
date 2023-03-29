@@ -7,6 +7,9 @@ import sqlite3
 import datetime
 from rich import print
 from rich.markdown import Markdown
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
 
 conf = configparser.ConfigParser()
 conf.read("config.ini")
@@ -49,12 +52,17 @@ def chat_response(prompt, role='user', history=[], model="gpt-4"):
 
 
 def multiline_input():
-    print("============[Enter your multiline content. Ctrl-D or Ctrl-Z ( windows ) to save it]==============\n")
+    def multiline_input_exit(event):
+        # Event handler to exit from the multiline input when Ctrl+D is pressed
+        event.current_buffer.validate_and_handle()
 
-    ret = sys.stdin.readlines()
+    key_bindings = KeyBindings()
+    key_bindings.add(Keys.ControlD)(multiline_input_exit)
 
-    print("\n==========[Multiline input finished]==========\n")
-    return '\n'.join(ret)
+    session = PromptSession("==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
+    text = session.prompt(multiline = True)
+    print("\n==============[Multiline input finished]==============\n")
+    return text
 
 def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token):
     cursor = db_conn.cursor()

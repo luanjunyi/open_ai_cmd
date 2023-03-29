@@ -1,4 +1,5 @@
 mac_say==2020.12.3
 openai==0.27.0
+prompt_toolkit==3.0.20
 rich==13.3.3
 SpeechRecognition==3.9.0
