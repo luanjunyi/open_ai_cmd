@@ -88,6 +88,7 @@ if __name__ == '__main__':
     history = []
     model = "gpt-4"
     db = sqlite3.connect('chat-log.db')
+    stack = []
     while True:
         prompt = input("> ")
         role = 'user'
@@ -106,6 +107,32 @@ if __name__ == '__main__':
             else:
                 print("Unknown model (%s), possible models are: %s" % (m, model_dict.keys()))
             continue
+
+        if prompt == "/push":
+            print("%d log pushed for later" % len(history))
+            stack.append(history)
+            hisotry = []
+            continue
+
+        if prompt.startswith("/pop"):
+            if len(stack) == 0:
+                print("thread stack is empty, can't pop")
+            else:
+                if prompt == "/pop":
+                    history = stack.pop()
+                elif prompt.startswith("/pop "):
+                    idx = prompt[len("/pop "):]
+                    if idx.isdigit() and int(idx) < len(stack):
+                        history = stack.pop(int(idx))
+                    elif idx == "all":
+                        stack = []
+            continue
+
+        if prompt == "/stack":
+            for i, hist in enumerate(stack):
+                print("%d\t%s" % (i, hist[0]["content"][:128]))
+            continue
+            
 
         if prompt == "/g3":
             model = model_dict["gpt3"]
