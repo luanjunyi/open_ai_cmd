@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
         if prompt == "/push":
             print("%d log pushed for later" % len(history))
-            stack.append(history)
+            stack.append(history.copy())
             hisotry = []
             continue
 
@@ -131,6 +131,11 @@ if __name__ == '__main__':
         if prompt == "/stack":
             for i, hist in enumerate(stack):
                 print("%d\t%s" % (i, hist[0]["content"][:128]))
+            continue
+
+        if prompt == "/hist":
+            for h in history:
+                print("[%s]\t %s\n\n%s\n\n" % (h["role"], h["content"], '=' * 50))
             continue
             
 
