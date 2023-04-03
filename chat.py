@@ -62,7 +62,7 @@ def multiline_input():
     session = PromptSession("==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
     text = session.prompt(multiline = True)
     print("\n==============[Multiline input finished]==============\n")
-    return text
+    return text.strip()
 
 def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token):
     cursor = db_conn.cursor()
@@ -83,14 +83,21 @@ def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token)
 def print_markdown(text):
     md = Markdown(text)
     print(md)
+
+def read_user_prompt(mode):
+    if mode == 'short':
+        return input("> ").strip()
+    assert mode == 'long'
+    return multiline_input()
     
 if __name__ == '__main__':
     history = []
     model = "gpt-4"
     db = sqlite3.connect('chat-log.db')
     stack = []
+    input_mode = 'short'
     while True:
-        prompt = input("> ")
+        prompt = read_user_prompt(input_mode)
         role = 'user'
         if prompt == '/bye':
             break
@@ -135,7 +142,7 @@ if __name__ == '__main__':
 
         if prompt == "/hist":
             for h in history:
-                print("[%s]\t %s\n\n%s\n\n" % (h["role"], h["content"], '=' * 50))
+                print("{%s} %s\n\n%s\n\n" % (h["role"].upper(), h["content"], '=' * 50))
             continue
             
 
@@ -146,14 +153,15 @@ if __name__ == '__main__':
         if prompt == "/g4":
             model = model_dict["gpt4"]
             continue
+
+        if prompt in ['/long', '/short']:
+            input_mode = prompt[1:]
+            continue
         
 
         if prompt.startswith('/sys '):
             prompt = prompt[len("/sys "):]
             role = 'system'
-
-        if prompt == '/tldr':
-            prompt = multiline_input()
 
         try:
             resp, num_prompt_tocken, num_completion_token = chat_response(prompt, role, history, model)
@@ -164,7 +172,7 @@ if __name__ == '__main__':
             continue
 
         log_chat(db, prompt, resp, num_prompt_tocken, num_completion_token)
-        print_markdown('\n' + resp + '\n')
+        print_markdown('\n\n' + resp + '\n\n\n')
 
     db.commit()
     db.close()

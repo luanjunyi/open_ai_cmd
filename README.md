@@ -19,7 +19,7 @@
 ### Userful commands
 
 * `/r` to get rid of all chat history. Otherwise they will be sent back to OpenAI for context.
-* `/tldr` to input multiline contents.
+* `/long` to enter multiline input mode. Type `/short` to switch back to single line input mode.
 * `/m gpt4` to use GPT-4 model if you are part of the Beta users. `/m gpt3` to use GPT-3 model which is faster, cheaper, but less smart.
 * `/hist` to show chat histories in current thread.
 * `/push` to push the current chatting thread into "the" chat thread stack.
