@@ -1,7 +1,7 @@
-import configparser
 import openai
 import readline
 import sys
+import os
 import signal
 import sqlite3
 import datetime
@@ -11,10 +11,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
-conf = configparser.ConfigParser()
-conf.read("config.ini")
 
-OPENAI_API_KEY = conf.get("open_ai", "api_key")
+OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
 
 def ignore_sig(sig, frame):
     print("To quite, input '/bye'. I ignore SIGINT to avoid accidental CTRL-C or alike")
@@ -59,7 +57,7 @@ def multiline_input():
     key_bindings = KeyBindings()
     key_bindings.add(Keys.ControlD)(multiline_input_exit)
 
-    session = PromptSession("==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
+    session = PromptSession("\n==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
     text = session.prompt(multiline = True)
     print("\n==============[Multiline input finished]==============\n")
     return text.strip()
@@ -144,6 +142,10 @@ if __name__ == '__main__':
             for h in history:
                 print("{%s} %s\n\n%s\n\n" % (h["role"].upper(), h["content"], '=' * 50))
             continue
+
+        if prompt == "/info":
+            print("model:%s num_hist:%d" % (model, len(history)))
+            continue
             
 
         if prompt == "/g3":
@@ -172,7 +174,9 @@ if __name__ == '__main__':
             continue
 
         log_chat(db, prompt, resp, num_prompt_tocken, num_completion_token)
-        print_markdown('\n\n' + resp + '\n\n\n')
+        print("\n")
+        print_markdown(resp)
+        print("\n")        
 
     db.commit()
     db.close()
