@@ -11,11 +11,12 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
-
 OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+
 
 def ignore_sig(sig, frame):
     print("To quite, input '/bye'. I ignore SIGINT to avoid accidental CTRL-C or alike")
+
 
 signal.signal(signal.SIGINT, ignore_sig)
 
@@ -35,7 +36,7 @@ def chat_response(prompt, role='user', history=[], model="gpt-4"):
         try:
             resp = openai.ChatCompletion.create(
                 model=model,
-                messages=history      
+                messages=history
             )
 
             message = resp.choices[0].message['content'].strip()
@@ -43,7 +44,8 @@ def chat_response(prompt, role='user', history=[], model="gpt-4"):
             usage = resp.usage
             return message, usage.prompt_tokens, usage.completion_tokens
         except Exception as err:
-            print("Failed to call OpenAI API. I will retry. The error is [%s]." % err )
+            print(
+                "Failed to call OpenAI API. I will retry. The error is [%s]." % err)
             retry -= 1
 
     return None, None, None
@@ -57,10 +59,12 @@ def multiline_input():
     key_bindings = KeyBindings()
     key_bindings.add(Keys.ControlD)(multiline_input_exit)
 
-    session = PromptSession("\n==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
-    text = session.prompt(multiline = True)
+    session = PromptSession(
+        "\n==============[Enter your multi-line input (Press Ctrl+D to finish input)]==============\n\n", key_bindings=key_bindings)
+    text = session.prompt(multiline=True)
     print("\n==============[Multiline input finished]==============\n")
     return text.strip()
+
 
 def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token):
     cursor = db_conn.cursor()
@@ -76,18 +80,21 @@ def log_chat(db_conn, prompt, response, num_prompt_tocken, num_completion_token)
             num_prompt_tocken,
             num_completion_token)
     cursor.execute(insert_query, data)
-    db_conn.commit()    
+    db_conn.commit()
+
 
 def print_markdown(text):
     md = Markdown(text)
     print(md)
+
 
 def read_user_prompt(mode):
     if mode == 'short':
         return input("> ").strip()
     assert mode == 'long'
     return multiline_input()
-    
+
+
 if __name__ == '__main__':
     history = []
     model = "gpt-4"
@@ -110,7 +117,8 @@ if __name__ == '__main__':
             if m in model_dict:
                 model = model_dict[m]
             else:
-                print("Unknown model (%s), possible models are: %s" % (m, model_dict.keys()))
+                print("Unknown model (%s), possible models are: %s" %
+                      (m, model_dict.keys()))
             continue
 
         if prompt == "/push":
@@ -140,13 +148,13 @@ if __name__ == '__main__':
 
         if prompt == "/hist":
             for h in history:
-                print("{%s} %s\n\n%s\n\n" % (h["role"].upper(), h["content"], '=' * 50))
+                print("{%s} %s\n\n%s\n\n" %
+                      (h["role"].upper(), h["content"], '=' * 50))
             continue
 
         if prompt == "/info":
             print("model:%s num_hist:%d" % (model, len(history)))
             continue
-            
 
         if prompt == "/g3":
             model = model_dict["gpt3"]
@@ -159,14 +167,14 @@ if __name__ == '__main__':
         if prompt in ['/long', '/short']:
             input_mode = prompt[1:]
             continue
-        
 
         if prompt.startswith('/sys '):
             prompt = prompt[len("/sys "):]
             role = 'system'
 
         try:
-            resp, num_prompt_tocken, num_completion_token = chat_response(prompt, role, history, model)
+            resp, num_prompt_tocken, num_completion_token = chat_response(
+                prompt, role, history, model)
             if resp is None:
                 raise Exception("Response is empty...")
         except Exception as err:
@@ -176,8 +184,7 @@ if __name__ == '__main__':
         log_chat(db, prompt, resp, num_prompt_tocken, num_completion_token)
         print("\n")
         print_markdown(resp)
-        print("\n")        
+        print("\n")
 
     db.commit()
     db.close()
-
